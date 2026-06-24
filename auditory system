@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Auditory System Matching Activity</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f8f7f4;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 2rem 1.5rem;
+  }
+
+  header {
+    margin-bottom: 1.5rem;
+  }
+
+  header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+
+  header p.subtitle {
+    font-size: 13px;
+    color: #185FA5;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .instructions {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 600px) {
+    .columns { grid-template-columns: 1fr; }
+  }
+
+  .col-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+  }
+
+  .term-card {
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a1a;
+    cursor: grab;
+    margin-bottom: 8px;
+    user-select: none;
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+
+  .term-card:hover { background: #f0f0f0; }
+  .term-card.dragging { opacity: 0.35; cursor: grabbing; }
+
+  .drop-zone {
+    min-height: 48px;
+    padding: 8px 12px;
+    border: 1.5px dashed #ccc;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f4f4f2;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+
+  .drop-zone.over { border-color: #378ADD; background: #E6F1FB; }
+  .drop-zone .def-text { flex: 1; font-size: 13px; color: #666; line-height: 1.5; }
+  .drop-zone .placed { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+  .drop-zone.correct { border-color: #3B6D11; background: #EAF3DE; border-style: solid; }
+  .drop-zone.incorrect { border-color: #A32D2D; background: #FCEBEB; border-style: solid; }
+
+  .status-icon { font-size: 18px; flex-shrink: 0; }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  button {
+    padding: 9px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  #check-btn {
+    border: 1px solid #185FA5;
+    background: #185FA5;
+    color: #fff;
+  }
+  #check-btn:hover { background: #0C447C; border-color: #0C447C; }
+
+  #reset-btn {
+    border: 1px solid #ccc;
+    background: #fff;
+    color: #555;
+  }
+  #reset-btn:hover { background: #f0f0f0; }
+
+  #score-bar {
+    font-size: 14px;
+    color: #555;
+    margin-top: 1rem;
+    min-height: 22px;
+    line-height: 1.6;
+  }
+  #score-bar strong { color: #1a1a1a; }
+
+  footer {
+    margin-top: 2.5rem;
+    font-size: 12px;
+    color: #aaa;
+    border-top: 1px solid #e8e8e8;
+    padding-top: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="subtitle">CSD Foundations</p>
+  <h1>Anatomy of the Auditory System</h1>
+</header>
+
+<p class="instructions">Drag each term from the left column and drop it onto its matching definition. When you're done, click <strong>Check answers</strong> to see your score.</p>
+
+<div class="columns">
+  <div>
+    <div class="col-label">Terms</div>
+    <div id="terms-bank"></div>
+  </div>
+  <div>
+    <div class="col-label">Definitions</div>
+    <div id="defs-list"></div>
+  </div>
+</div>
+
+<div class="btn-row">
+  <button id="check-btn" onclick="checkAnswers()">Check answers</button>
+  <button id="reset-btn" onclick="resetGame()">Reset</button>
+</div>
+<div id="score-bar"></div>
+
+<footer>Auditory System Matching &mdash; Undergraduate CSD</footer>
+
+<script>
+const pairs = [
+  { term: "Pinna", def: "The visible outer flap of the ear that collects and funnels sound waves into the ear canal." },
+  { term: "Tympanic membrane", def: "The eardrum — a thin membrane that vibrates in response to incoming sound waves." },
+  { term: "Malleus", def: "The first and largest of the three ossicles; directly attached to the eardrum." },
+  { term: "Incus", def: "The middle ossicle (the 'anvil') that transfers vibrations from the malleus to the stapes." },
+  { term: "Stapes", def: "The smallest bone in the body (the 'stirrup'); transmits vibrations to the oval window of the cochlea." },
+  { term: "Oval window", def: "A membrane-covered opening between the middle and inner ear where the stapes transfers energy." },
+  { term: "Cochlea", def: "A fluid-filled, snail-shaped structure of the inner ear where sound is converted into neural signals." },
+  { term: "Basilar membrane", def: "A structure inside the cochlea that vibrates at different locations depending on the frequency of sound." },
+  { term: "Hair cells", def: "Sensory cells on the basilar membrane that transduce mechanical vibration into electrical impulses." },
+  { term: "Auditory nerve", def: "Carries electrical signals from the cochlea to the brainstem for processing." },
+];
+
+let draggedTerm = null;
+
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function makeTermCard(term) {
+  const card = document.createElement('div');
+  card.className = 'term-card';
+  card.draggable = true;
+  card.textContent = term;
+  card.dataset.term = term;
+  card.addEventListener('dragstart', () => { draggedTerm = term; card.classList.add('dragging'); });
+  card.addEventListener('dragend', () => card.classList.remove('dragging'));
+  return card;
+}
+
+function init() {
+  const shuffledTerms = shuffle(pairs.map(p => p.term));
+  const shuffledDefs = shuffle(pairs.map(p => ({ term: p.term, def: p.def })));
+
+  const bank = document.getElementById('terms-bank');
+  bank.innerHTML = '';
+  shuffledTerms.forEach(term => bank.appendChild(makeTermCard(term)));
+
+  const defsList = document.getElementById('defs-list');
+  defsList.innerHTML = '';
+  shuffledDefs.forEach(({ term, def }) => {
+    const zone = document.createElement('div');
+    zone.className = 'drop-zone';
+    zone.dataset.answer = term;
+
+    const defText = document.createElement('span');
+    defText.className = 'def-text';
+    defText.textContent = def;
+    zone.appendChild(defText);
+
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('over');
+      if (!draggedTerm) return;
+      const existing = zone.querySelector('.placed');
+      if (existing) { returnTerm(existing.textContent); existing.remove(); }
+      const icon = zone.querySelector('.status-icon');
+      if (icon) icon.remove();
+      zone.classList.remove('correct', 'incorrect');
+      const placed = document.createElement('span');
+      placed.className = 'placed';
+      placed.textContent = draggedTerm;
+      zone.insertBefore(placed, zone.firstChild);
+      defText.style.display = 'none';
+      removeFromBank(draggedTerm);
+      draggedTerm = null;
+    });
+
+    defsList.appendChild(zone);
+  });
+
+  document.getElementById('score-bar').innerHTML = '';
+}
+
+function removeFromBank(term) {
+  document.querySelectorAll('#terms-bank .term-card').forEach(c => { if (c.dataset.term === term) c.remove(); });
+}
+
+function returnTerm(term) {
+  document.getElementById('terms-bank').appendChild(makeTermCard(term));
+}
+
+function checkAnswers() {
+  let correct = 0;
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    const placed = zone.querySelector('.placed');
+    const icon = zone.querySelector('.status-icon');
+    if (icon) icon.remove();
+    zone.classList.remove('correct', 'incorrect');
+    if (!placed) return;
+    const ok = placed.textContent === zone.dataset.answer;
+    const iconEl = document.createElement('span');
+    iconEl.className = 'status-icon';
+    iconEl.innerHTML = ok
+      ? '<i class="ti ti-circle-check" style="color:#3B6D11" aria-hidden="true"></i>'
+      : '<i class="ti ti-circle-x" style="color:#A32D2D" aria-hidden="true"></i>';
+    zone.appendChild(iconEl);
+    zone.classList.add(ok ? 'correct' : 'incorrect');
+    if (ok) correct++;
+  });
+  const total = pairs.length;
+  document.getElementById('score-bar').innerHTML =
+    `Score: <strong>${correct} / ${total}</strong> &mdash; ${correct === total ? 'Perfect! Great work.' : 'Review the highlighted items and try again.'}`;
+}
+
+function resetGame() { init(); }
+
+init();
+</script>
+</body>
+</html>
