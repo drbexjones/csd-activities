@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Find the HIPAA Violations</title>
+  <style>
+    :root {
+      --obu-green-dark: #003c3c;
+      --obu-green: #006747;
+      --obu-gold: #d6b76f;
+      --cream: #f7f7f2;
+      --ink: #1f2933;
+      --muted: #5b6770;
+      --success: #1f7a4d;
+      --warning: #a16207;
+      --white: #ffffff;
+      --border: #d9e2df;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: #eef3f0;
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, var(--obu-green-dark), var(--obu-green));
+      color: var(--white);
+      border-radius: 18px;
+      padding: 26px;
+      box-shadow: 0 14px 30px rgba(0, 60, 60, 0.18);
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--obu-gold);
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.1;
+    }
+
+    .hero p:last-child {
+      margin-bottom: 0;
+      max-width: 800px;
+      font-size: 17px;
+    }
+
+    .panel {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 20px rgba(31, 41, 51, 0.06);
+    }
+
+    .statusbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .score {
+      font-weight: 700;
+      color: var(--obu-green-dark);
+    }
+
+    .progress {
+      height: 14px;
+      flex: 1 1 260px;
+      border-radius: 999px;
+      background: #e6ece9;
+      overflow: hidden;
+      min-width: 220px;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--obu-gold), var(--obu-green));
+      transition: width 0.25s ease;
+    }
+
+    .activity-shell {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .scene {
+      position: relative;
+      min-height: 560px;
+      border-radius: 18px;
+      overflow: hidden;
+      background:
+        linear-gradient(#dce9e5 0 16%, transparent 16%),
+        linear-gradient(90deg, rgba(255,255,255,.55), rgba(255,255,255,0)),
+        #f2efe6;
+      border: 4px solid var(--obu-green-dark);
+    }
+
+    .floor {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 36%;
+      background: repeating-linear-gradient(
+        90deg,
+        #d9d2bd 0,
+        #d9d2bd 44px,
+        #cfc6aa 44px,
+        #cfc6aa 48px
+      );
+      border-top: 4px solid #c1b993;
+    }
+
+    .window {
+      position: absolute;
+      top: 38px;
+      left: 38px;
+      width: 190px;
+      height: 110px;
+      border: 8px solid var(--white);
+      background: linear-gradient(135deg, #a8d5e8, #e8f8ff);
+      box-shadow: 0 4px 10px rgba(0,0,0,.12);
+    }
+
+    .door {
+      position: absolute;
+      top: 54px;
+      right: 48px;
+      width: 118px;
+      height: 260px;
+      background: #b78b5d;
+      border: 7px solid #835f3a;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .door::after {
+      content: "";
+      position: absolute;
+      right: 18px;
+      top: 130px;
+      width: 11px;
+      height: 11px;
+      background: var(--obu-gold);
+      border-radius: 50%;
+    }
+
+    .desk {
+      position: absolute;
+      left: 74px;
+      bottom: 120px;
+      width: 395px;
+      height: 120px;
+      background: #8a6640;
+      border-radius: 14px 14px 6px 6px;
+      box-shadow: 0 12px 0 #60462b;
+    }
+
+    .desk::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 22px;
+      background: #a77c50;
+      border-radius: 14px 14px 0 0;
+    }
+
+    .computer {
+      position: absolute;
+      left: 132px;
+      bottom: 254px;
+      width: 140px;
+      height: 88px;
+      background: #293745;
+      border: 8px solid #111827;
+      border-radius: 8px;
+    }
+
+    .computer::after {
+      content: "Patient: J. Miller\A DOB: 04/12/20";
+      white-space: pre;
+      position: absolute;
+      left: 10px;
+      top: 13px;
+      color: #eff6ff;
+      font-size: 12px;
+      line-height: 1.25;
+    }
+
+    .chart {
+      position: absolute;
+      left: 306px;
+      bottom: 260px;
+      width: 120px;
+      height: 84px;
+      background: #fffdf2;
+      border: 3px solid #c9b36b;
+      transform: rotate(4deg);
+      box-shadow: 0 4px 10px rgba(0,0,0,.13);
+    }
+
+    .chart::before {
+      content: "Speech Eval\A Name: Ava R.";
+      white-space: pre;
+      position: absolute;
+      top: 12px;
+      left: 10px;
+      font-size: 12px;
+      color: #374151;
+      font-weight: 700;
+    }
+
+    .phone {
+      position: absolute;
+      left: 398px;
+      bottom: 258px;
+      width: 45px;
+      height: 78px;
+      background: #111827;
+      border-radius: 10px;
+      border: 4px solid #374151;
+      transform: rotate(-10deg);
+    }
+
+    .phone::after {
+      content: "Pt pic";
+      position: absolute;
+      top: 18px;
+      left: 4px;
+      width: 29px;
+      height: 35px;
+      background: #dbeafe;
+      color: #111827;
+      font-size: 10px;
+      display: grid;
+      place-items: center;
+      border-radius: 3px;
+    }
+
+    .whiteboard {
+      position: absolute;
+      left: 505px;
+      top: 72px;
+      width: 245px;
+      height: 132px;
+      background: #fbfffd;
+      border: 6px solid #b9c5c0;
+      border-radius: 10px;
+      box-shadow: 0 6px 14px rgba(0,0,0,.1);
+    }
+
+    .whiteboard::after {
+      content: "Today's Clients\A 9:00 Ben - fluency\A 10:00 Mia - AAC";
+      white-space: pre;
+      position: absolute;
+      left: 14px;
+      top: 18px;
+      color: #1f2933;
+      font-size: 15px;
+      line-height: 1.4;
+      font-weight: 700;
+    }
+
+    .people-talk {
+      position: absolute;
+      left: 520px;
+      bottom: 105px;
+      width: 230px;
+      height: 210px;
+    }
+
+    .person {
+      position: absolute;
+      bottom: 0;
+      width: 70px;
+      height: 140px;
+    }
+
+    .person.one { left: 0; }
+    .person.two { right: 22px; }
+
+    .head {
+      position: absolute;
+      left: 18px;
+      top: 0;
+      width: 42px;
+      height: 42px;
+      background: #d8a06d;
+      border-radius: 50%;
+      border: 3px solid #8b5e34;
+    }
+
+    .body {
+      position: absolute;
+      top: 45px;
+      left: 10px;
+      width: 58px;
+      height: 82px;
+      background: var(--obu-green);
+      border-radius: 16px 16px 6px 6px;
+    }
+
+    .person.two .body { background: var(--obu-gold); }
+
+    .legs {
+      position: absolute;
+      bottom: 0;
+      left: 18px;
+      width: 42px;
+      height: 28px;
+      background: #374151;
+      border-radius: 0 0 10px 10px;
+    }
+
+    .bubble {
+      position: absolute;
+      left: 36px;
+      top: 12px;
+      width: 165px;
+      padding: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #fff;
+      border: 3px solid var(--obu-green-dark);
+      border-radius: 14px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.12);
+    }
+
+    .trash {
+      position: absolute;
+      right: 205px;
+      bottom: 96px;
+      width: 75px;
+      height: 98px;
+      background: #9aa4a0;
+      border-radius: 8px 8px 14px 14px;
+      border: 4px solid #6b7280;
+    }
+
+    .trash::after {
+      content: "Report";
+      position: absolute;
+      left: 13px;
+      top: -28px;
+      width: 74px;
+      height: 42px;
+      background: #fffdf2;
+      border: 2px solid #c9b36b;
+      transform: rotate(14deg);
+      display: grid;
+      place-items: center;
+      color: #374151;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .hotspot {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--obu-gold);
+      border: 4px solid var(--white);
+      color: var(--obu-green-dark);
+      font-weight: 900;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,.3);
+      transition: transform .15s ease, background .15s ease;
+      z-index: 5;
+    }
+
+    .hotspot:hover,
+    .hotspot:focus {
+      transform: scale(1.1);
+      outline: 4px solid rgba(214, 183, 111, .35);
+    }
+
+    .hotspot.found {
+      background: var(--success);
+      color: white;
+      cursor: default;
+    }
+
+    .side h2 {
+      margin-top: 0;
+      color: var(--obu-green-dark);
+    }
+
+    .feedback {
+      min-height: 190px;
+      background: var(--cream);
+      border-left: 8px solid var(--obu-gold);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .feedback h3 {
+      margin-top: 0;
+      color: var(--obu-green-dark);
+    }
+
+    .found-list {
+      padding-left: 18px;
+      margin-bottom: 0;
+    }
+
+    .found-list li {
+      margin-bottom: 7px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      background: var(--obu-green-dark);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    button:hover,
+    button:focus {
+      background: var(--obu-green);
+      outline: 4px solid rgba(0, 103, 71, .18);
+    }
+
+    .complete {
+      display: none;
+      background: #eef6f2;
+      border: 2px solid var(--success);
+      border-radius: 14px;
+      padding: 16px;
+      margin-top: 14px;
+    }
+
+    .complete strong {
+      color: var(--success);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 900px) {
+      .activity-shell { grid-template-columns: 1fr; }
+      .scene { min-height: 620px; }
+      .side { order: -1; }
+    }
+
+    @media (max-width: 620px) {
+      .wrap { padding: 12px; }
+      .scene { transform-origin: top left; overflow-x: auto; }
+      .hero, .panel { border-radius: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero" aria-labelledby="activity-title">
+      <p class="eyebrow">HIPAA Compliance Training</p>
+      <h1 id="activity-title">Find the HIPAA Violations</h1>
+      <p>Review the clinical scene. Click each numbered hotspot to identify a privacy risk and learn the safer professional practice.</p>
+    </section>
+
+    <section class="panel statusbar" aria-label="Activity progress">
+      <div class="score" id="scoreText">0 of 6 violations found</div>
+      <div class="progress" aria-hidden="true"><div class="bar" id="progressBar"></div></div>
+      <button type="button" id="resetBtn">Reset Activity</button>
+    </section>
+
+    <section class="activity-shell">
+      <div class="scene" role="img" aria-label="Illustrated clinic scene with clickable HIPAA privacy risks.">
+        <div class="window"></div>
+        <div class="door"></div>
+        <div class="whiteboard"></div>
+        <div class="floor"></div>
+        <div class="desk"></div>
+        <div class="computer"></div>
+        <div class="chart"></div>
+        <div class="phone"></div>
+        <div class="people-talk">
+          <div class="bubble">“His swallow study was really bad.”</div>
+          <div class="person one"><div class="head"></div><div class="body"></div><div class="legs"></div></div>
+          <div class="person two"><div class="head"></div><div class="body"></div><div class="legs"></div></div>
+        </div>
+        <div class="trash"></div>
+
+        <button class="hotspot" style="left: 178px; bottom: 307px;" data-id="computer" aria-label="Hotspot 1: unlocked computer screen">1</button>
+        <button class="hotspot" style="left: 348px; bottom: 318px;" data-id="chart" aria-label="Hotspot 2: patient chart left unattended">2</button>
+        <button class="hotspot" style="left: 414px; bottom: 316px;" data-id="phone" aria-label="Hotspot 3: patient photo on personal phone">3</button>
+        <button class="hotspot" style="left: 610px; top: 116px;" data-id="whiteboard" aria-label="Hotspot 4: client names and services on public whiteboard">4</button>
+        <button class="hotspot" style="left: 612px; bottom: 276px;" data-id="conversation" aria-label="Hotspot 5: public patient conversation">5</button>
+        <button class="hotspot" style="right: 213px; bottom: 185px;" data-id="trash" aria-label="Hotspot 6: patient document in trash">6</button>
+      </div>
+
+      <aside class="panel side" aria-live="polite">
+        <h2>Feedback</h2>
+        <div class="feedback" id="feedbackBox">
+          <h3>Start here</h3>
+          <p>Click a numbered hotspot in the clinic scene. Look for information that is visible, audible, unsecured, or shared through an inappropriate method.</p>
+        </div>
+
+        <h2>Found Items</h2>
+        <ol class="found-list" id="foundList"></ol>
+
+        <div class="complete" id="completeBox">
+          <p><strong>Activity complete.</strong></p>
+          <p>You identified all six HIPAA risks. Continue to the Canvas quiz to complete the knowledge check.</p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const items = {
+      computer: {
+        title: "Unlocked computer screen",
+        issue: "Patient information is visible on an unattended computer screen.",
+        better: "Lock the screen before stepping away and position monitors so others cannot casually view PHI."
+      },
+      chart: {
+        title: "Patient chart left out",
+        issue: "A speech evaluation report with identifying information is sitting where others could see it.",
+        better: "Keep paper records covered, secured, and returned to the approved storage location as soon as possible."
+      },
+      phone: {
+        title: "Patient information on a personal phone",
+        issue: "A patient photo or clinical image is visible on a personal device.",
+        better: "Do not photograph, text, or store patient information on personal devices unless the site has an approved HIPAA-compliant process."
+      },
+      whiteboard: {
+        title: "Public schedule with identifying details",
+        issue: "Client names and service information are posted where visitors or other unauthorized people may see them.",
+        better: "Use initials, codes, or a secure scheduling system according to site policy."
+      },
+      conversation: {
+        title: "Patient discussion in a public area",
+        issue: "Clinical details are being discussed where people without a need to know may overhear them.",
+        better: "Discuss patient information only in private areas with appropriate supervisors or care team members."
+      },
+      trash: {
+        title: "PHI placed in regular trash",
+        issue: "A report containing patient information appears to be discarded in an unsecured trash bin.",
+        better: "Dispose of PHI using the site-approved secure shredding or confidential disposal process."
+      }
+    };
+
+    const found = new Set();
+    const total = Object.keys(items).length;
+    const feedbackBox = document.getElementById('feedbackBox');
+    const foundList = document.getElementById('foundList');
+    const scoreText = document.getElementById('scoreText');
+    const progressBar = document.getElementById('progressBar');
+    const completeBox = document.getElementById('completeBox');
+    const hotspots = document.querySelectorAll('.hotspot');
+
+    function updateProgress() {
+      scoreText.textContent = `${found.size} of ${total} violations found`;
+      progressBar.style.width = `${(found.size / total) * 100}%`;
+      completeBox.style.display = found.size === total ? 'block' : 'none';
+    }
+
+    function addFoundItem(id) {
+      const li = document.createElement('li');
+      li.textContent = items[id].title;
+      li.id = `found-${id}`;
+      foundList.appendChild(li);
+    }
+
+    function showFeedback(id) {
+      const item = items[id];
+      feedbackBox.innerHTML = `
+        <h3>${item.title}</h3>
+        <p><strong>Why this matters:</strong> ${item.issue}</p>
+        <p><strong>Better practice:</strong> ${item.better}</p>
+      `;
+    }
+
+    hotspots.forEach(button => {
+      button.addEventListener('click', () => {
+        const id = button.dataset.id;
+        showFeedback(id);
+        if (!found.has(id)) {
+          found.add(id);
+          button.classList.add('found');
+          button.setAttribute('aria-label', button.getAttribute('aria-label') + ' found');
+          addFoundItem(id);
+          updateProgress();
+        }
+      });
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      found.clear();
+      foundList.innerHTML = '';
+      feedbackBox.innerHTML = `
+        <h3>Start here</h3>
+        <p>Click a numbered hotspot in the clinic scene. Look for information that is visible, audible, unsecured, or shared through an inappropriate method.</p>
+      `;
+      hotspots.forEach(button => {
+        button.classList.remove('found');
+        button.setAttribute('aria-label', button.getAttribute('aria-label').replace(' found', ''));
+      });
+      updateProgress();
+    });
+
+    updateProgress();
+  </script>
+</body>
+</html>
